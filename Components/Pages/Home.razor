@@ -1,0 +1,83 @@
+﻿@page "/"
+
+<h1>Gamesito de EquiXs and Cer0)</h1>
+
+<div class="board">
+    @for (int i = 0; i < 9; i++)
+    {
+        int posicion = i + 1;
+        <button class="cell" @onclick="() => CasillaClicada(posicion)" disabled="@juegoTerminado">
+            @tableroVisual[i]
+        </button>
+    }
+</div>
+
+<h3 class="status">@mensajeEstado</h3>
+
+<button class="restart-button" @onclick="ReiniciarJuego">Reiniciar Juego</button>
+
+
+@code {
+    private LogicaJuego juego = null!;
+    private string[] tableroVisual = new string[9];
+    private string mensajeEstado = null!;
+    private bool juegoTerminado;
+
+    protected override void OnInitialized()
+    {
+        ReiniciarJuego();
+    }
+
+    private void ReiniciarJuego()
+    {
+        juego = new LogicaJuego();
+        ActualizarTableroVisual();
+        mensajeEstado = "¡Es tu turno! Dale Maeee.";
+        juegoTerminado = false;
+        StateHasChanged();
+    }
+
+    private void CasillaClicada(int posicion)
+    {
+        if (juegoTerminado || !juego.MovimientoValido(posicion)) { return; }
+        juego.RealizarMovimiento(posicion, LogicaJuego.JUGADOR);
+        if (RevisarEstadoJuego()) { ActualizarTableroVisual(); StateHasChanged(); return; }
+        int movimientoIA = juego.ObtenerMovimientoIA();
+        juego.RealizarMovimiento(movimientoIA, LogicaJuego.IA);
+        RevisarEstadoJuego();
+        ActualizarTableroVisual();
+        StateHasChanged();
+    }
+
+    private void ActualizarTableroVisual()
+    {
+        char[,] tableroLogica = juego.ObtenerTablero();
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                char simbolo = tableroLogica[i, j];
+                tableroVisual[i * 3 + j] = (simbolo == 'X' || simbolo == 'O') ? simbolo.ToString() : "";
+            }
+        }
+    }
+
+    private bool RevisarEstadoJuego()
+    {
+        char ganador = juego.RevisarGanador();
+        if (ganador != ' ')
+        {
+            mensajeEstado = (ganador == LogicaJuego.JUGADOR) ? "¡Bien hecho Chechin! ¡Has ganado!" : "¡KgasT! La IA te dio Gaver.";
+            juegoTerminado = true;
+            return true;
+        }
+        if (juego.EsEmpate())
+        {
+            mensajeEstado = "¡Kague BB / Empate!";
+            juegoTerminado = true;
+            return true;
+        }
+        mensajeEstado = "¡Dale Maeee!";
+        return false;
+    }
+}
